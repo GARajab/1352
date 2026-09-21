@@ -341,6 +341,11 @@
                 fwnum = parseInt(m[1], 10) * 100 + parseInt(ms, 10);
             }
 
+            console.log("has manifest attr:", document.documentElement.hasAttribute("manifest"));
+            console.log("has applicationCache:", !!window.applicationCache);
+            console.log("status:", window.applicationCache && window.applicationCache.status);
+            // status codes: 0=UNCACHED 1=IDLE 2=CHECKING 3=DOWNLOADING 4=UPDATEREADY 5=OBSOLETE
+
             var supported = (fwnum !== null && SUPPORTED[fwnum] === 1);
 
             // ------- percentage setter -------
@@ -447,6 +452,7 @@
             // if the browser never fires cached/noupdate (rare), fall back
             setTimeout(function () { if (!jbLoaded) loadJb(); }, 4000);
         })();
+
     </script>
 </body>
 
