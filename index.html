@@ -9,131 +9,208 @@
         margin: 0; padding: 0; min-height: 100%;
         background: #0b0d10; color: #c8ced8;
         font: 15px/1.45 "Segoe UI", system-ui, sans-serif;
-      }
-
-      /* ---------- brand ---------- */
-      #brand {
-        text-align: center; padding: 8px 10px;
-        background: #0e1116; border-bottom: 1px solid #1e2732;
-      }
-      #brand img {
-        width: 28px; height: 28px; margin-right: 8px;
-        border-radius: 50%; vertical-align: middle;
-      }
-      #brand b {
-        font-size: 15px; font-weight: 700; letter-spacing: .14em;
-        color: #e6ebf2; vertical-align: middle;
-      }
-
-      /* ---------- landing / firmware bar ---------- */
-      #fwbar { padding: 12px 18px 10px; }
-      #fwstate { font-size: 20px; font-weight: 700; margin: 0 0 4px; }
-      #det { font-size: 13px; color: #8b95a3; margin: 0 0 4px; }
-      #det b { color: #c8ced8; font-weight: 600; }
-      #cache { font-size: 12px; color: #5c6672; min-height: 14px; margin: 0; }
-      #cache.cacheok { color: #7fd0a0; }
-
-      /* ---------- progress bar ---------- */
-      #progwrap {
-        margin: 10px 18px 0;
-        height: 10px;
-        background: #11151b;
-        border: 1px solid #1e2732;
-        border-radius: 5px;
         overflow: hidden;
-        display: none;
       }
-      #progwrap.on { display: block; }
-      #prog {
+
+      /* ---------- unsupported chip (top-left) ---------- */
+      #fwchip {
+        position: fixed;
+        top: 14px; left: 14px;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: #1a0f10;
+        border: 1px solid #5c2a2a;
+        border-left: 4px solid #d08a7f;
+        border-radius: 8px;
+        box-shadow: 0 4px 18px rgba(0,0,0,.55);
+        z-index: 10;
+        max-width: 60vw;
+      }
+      #fwchip.on { display: flex; }
+      #fwchip .dot {
+        width: 10px; height: 10px; border-radius: 50%;
+        background: #d08a7f;
+        box-shadow: 0 0 10px #d08a7f;
+        flex: 0 0 auto;
+      }
+      #fwchip .txt { line-height: 1.25; }
+      #fwchip .txt .t1 {
+        font-size: 13px; font-weight: 700; letter-spacing: .12em;
+        color: #f0c0b6;
+      }
+      #fwchip .txt .t2 {
+        font-size: 11px; color: #a07a72; margin-top: 2px;
+      }
+
+      /* ---------- stage (ring + image + number) ---------- */
+      #stage {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      }
+
+      #ringwrap {
+        position: relative;
+        width:  min(78vmin, 620px);
+        height: min(78vmin, 620px);
+      }
+
+      /* the SVG ring sits behind the image */
+      #ring {
+        position: absolute;
+        inset: 0;
+        width: 100%;
         height: 100%;
-        width: 0%;
-        background: linear-gradient(90deg, #2f6f52, #7fd0a0);
-        transition: width .25s ease-out;
+        transform: rotate(-90deg);   /* start at 12 o'clock */
+        pointer-events: none;
       }
-      #progwrap.fail #prog {
-        background: linear-gradient(90deg, #6f2f2f, #d08a7f);
+      #ring .track {
+        fill: none;
+        stroke: #1b2029;
+        stroke-width: 10;
       }
-      #progwrap.done #prog {
-        background: linear-gradient(90deg, #2f6f52, #7fd0a0);
+      #ring .fill {
+        fill: none;
+        stroke: url(#ringgrad);
+        stroke-width: 10;
+        stroke-linecap: round;
+        transition: stroke-dashoffset .35s ease-out, stroke .3s;
       }
-      #proglabel {
-        margin: 6px 18px 0;
-        font-size: 12px;
-        color: #8b95a3;
-        text-align: right;
-        display: none;
-      }
-      #proglabel.on { display: block; }
+      #ring.fail .fill { stroke: #d08a7f; }
+      #ring.done .fill { stroke: #7fd0a0; }
 
-      /* ---------- jb.js running UI (unchanged) ---------- */
-      #spin {
-        position: fixed; top: calc(50% + 20px); left: 50%;
-        width: 46px; height: 46px; margin: -23px 0 0 -23px;
-        border: 4px solid #1e2732; border-top-color: #7fd0a0;
-        border-radius: 50%; animation: spin .9s linear infinite;
+      /* the logo image sits inside the ring */
+      #logo {
+        position: absolute;
+        top: 50%; left: 50%;
+        width: 62%;
+        height: 62%;
+        transform: translate(-50%, -50%);
+        object-fit: contain;
+        border-radius: 50%;
+        transition: opacity .3s;
+        opacity: 1;
+        user-select: none;
+        -webkit-user-drag: none;
       }
-      @keyframes spin { to { transform: rotate(360deg); } }
-      #msg {
-        position: fixed; top: 50%; left: 0; right: 0;
-        transform: translateY(-50%); text-align: center;
-        font-size: 22px; font-weight: 700;
-        letter-spacing: .5px; display: none;
+      /* while loading: dim so the percentage is readable */
+      body.running #logo { opacity: .35; }
+      body.done    #logo { opacity: 1; }
+      body.fail    #logo { opacity: .45; }
+
+      /* big percentage, centered over the image */
+      #pct {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: clamp(56px, 16vmin, 160px);
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        color: #e6ebf2;
+        text-shadow: 0 2px 18px rgba(0,0,0,.75);
+        pointer-events: none;
+        transition: opacity .35s;
+        line-height: 1;
       }
-      #msg.done {
-        color: #7fd0a0;
-        font-size: 44px;
-        letter-spacing: .18em;
+      #pct .unit {
+        font-size: .38em;
+        font-weight: 600;
+        margin-left: .08em;
+        color: #9fb3d0;
       }
-      #msg.fail {
-        color: #d08a7f;
-        font-size: 24px;
-        letter-spacing: .04em;
-        padding: 0 24px;
+      /* after the run, if the pct fades out on success */
+      body.done #pct { opacity: 0; }
+
+      /* ---------- final status (under the pct) ---------- */
+      #final {
+        position: absolute;
+        top: calc(50% + clamp(70px, 20vmin, 200px));
+        left: 0; right: 0;
+        text-align: center;
+        font-size: clamp(16px, 3.2vmin, 30px);
+        font-weight: 700;
+        letter-spacing: .12em;
+        opacity: 0;
+        transform: translateY(6px);
+        transition: opacity .4s .15s, transform .4s .15s;
+        pointer-events: none;
       }
-      #wrap { padding: 0; }
+      body.done #final,
+      body.fail #final {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      body.done #final { color: #7fd0a0; }
+      body.fail #final { color: #d08a7f; }
+
+      /* ---------- hidden jb.js compatibility nodes ---------- */
+      #wrap  { display: none; }
       #state, #out { display: none; }
+      #spin  { display: none; }
+      #msg   { display: none; }
 
-      body.done #spin { display: none; }
-      body.done #msg  { display: block; }
-      body.fail #spin { display: none; }
-      body.fail #msg  { display: block; }
-
-      body.log #spin, body.log #msg { display: none; }
-      body.log #wrap { padding: 14px 18px; }
+      /* ---------- ?log=1 overrides ---------- */
+      body.log #stage { display: none; }
+      body.log #fwchip { display: none; }
+      body.log #wrap {
+        display: block;
+        padding: 14px 18px;
+      }
       body.log #state {
-        display: block; font-size: 22px; font-weight: 700; margin: 0 0 8px;
+        display: block;
+        font-size: 22px; font-weight: 700; margin: 0 0 8px;
       }
       body.log #out {
-        display: block; white-space: pre-wrap;
+        display: block;
+        white-space: pre-wrap;
         font: 12px/1.45 Consolas, monospace;
         background: #11151b; border: 1px solid #1e2732; border-radius: 5px;
-        padding: 10px 12px; height: calc(100vh - 230px); overflow-y: auto;
+        padding: 10px 12px;
+        height: calc(100vh - 60px);
+        overflow-y: auto;
       }
 
-      /* ---------- shared status colors ---------- */
       .ok   { color: #7fd0a0; }
       .bad  { color: #d08a7f; }
       .warn { color: #d8c07f; }
-      .safe { color: #7fd0a0; }
-      .danger { color: #d08a7f; }
-      code { color: #9fb3d0; }
     </style>
   </head>
   <body>
-    <div id="brand"><b>RAW GAME</b></div>
-
-    <!-- landing / firmware detection (jb.js does not see these IDs) -->
-    <div id="fwbar">
-      <div id="fwstate">detecting firmware...</div>
-      <div id="det"></div>
-      <div id="cache"></div>
+    <!-- unsupported firmware chip (top-left) -->
+    <div id="fwchip">
+      <div class="dot"></div>
+      <div class="txt">
+        <div class="t1">UNSUPPORTED FIRMWARE</div>
+        <div class="t2" id="fwver">firmware unknown</div>
+      </div>
     </div>
 
-    <!-- progress bar (shown once jb.js starts) -->
-    <div id="progwrap"><div id="prog"></div></div>
-    <div id="proglabel"></div>
+    <!-- main visual stage -->
+    <div id="stage">
+      <div id="ringwrap">
+        <svg id="ring" viewBox="0 0 200 200" aria-hidden="true">
+          <defs>
+            <linearGradient id="ringgrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%"   stop-color="#4fa3d8"/>
+              <stop offset="55%"  stop-color="#8a6ff0"/>
+              <stop offset="100%" stop-color="#7fd0a0"/>
+            </linearGradient>
+          </defs>
+          <circle class="track" cx="100" cy="100" r="88"/>
+          <circle class="fill"  cx="100" cy="100" r="88"/>
+        </svg>
+        <img id="logo" src="rajab-logo.jpg" alt="">
+        <div id="pct">0<span class="unit">%</span></div>
+      </div>
+      <div id="final"></div>
+    </div>
 
-    <!-- jb.js owns everything below: #spin, #msg, #wrap > #state + #out -->
+    <!-- jb.js compatibility nodes (kept, hidden unless ?log=1) -->
     <div id="spin"></div>
     <div id="msg"></div>
     <div id="wrap">
@@ -145,23 +222,24 @@
       (function () {
         "use strict";
 
-        var fwStateEl = document.getElementById("fwstate");
-        var detEl     = document.getElementById("det");
-        var cacheEl   = document.getElementById("cache");
-        var progWrap  = document.getElementById("progwrap");
-        var progEl    = document.getElementById("prog");
-        var progLabel = document.getElementById("proglabel");
-        var msgEl     = document.getElementById("msg");
+        var fwChip  = document.getElementById("fwchip");
+        var fwVer   = document.getElementById("fwver");
+        var ringSvg = document.getElementById("ring");
+        var ringFill= ringSvg.querySelector(".fill");
+        var pctEl   = document.getElementById("pct");
+        var finalEl = document.getElementById("final");
+        var logoEl  = document.getElementById("logo");
 
-        function setFw(t, c)    { fwStateEl.textContent = t; fwStateEl.className = c || ""; }
-        function setDet(html)   { detEl.innerHTML = html; }
-        function setCache(t, ok){ cacheEl.textContent = t; cacheEl.className = ok ? "cacheok" : ""; }
+        // ------- SVG ring geometry -------
+        var R = 88;
+        var CIRC = 2 * Math.PI * R;
+        ringFill.style.strokeDasharray  = CIRC + " " + CIRC;
+        ringFill.style.strokeDashoffset = CIRC;   // start empty
 
-        var params = new URLSearchParams(location.search);
-
+        // ------- firmware detection -------
         // KEEP IN SYNC with ps4_offsets.js.
         // PS4 reports its minor as two hex digits in the UA (13.52 -> 0x52).
-        var SUPPORTED = { 1302: 1, 1304: 1, 1350: 1, 1352: 1 }; // measured on hardware
+        var SUPPORTED = { 1302: 1, 1304: 1, 1350: 1, 1352: 1 };
 
         var key = null, fwnum = null;
         var m = /PlayStation\s+4[\/ ](\d+)\.(\d+)/.exec(navigator.userAgent);
@@ -174,23 +252,16 @@
 
         var supported = (fwnum !== null && SUPPORTED[fwnum] === 1);
 
-        setDet("firmware <b>" + (key || "unknown") + "</b>" +
-               (supported ? " &middot; <b>supported</b>"
-                          : " &middot; not in this build's kernel table"));
-
-        // ---- hard dead end on unsupported firmware ----
-        if (!supported) {
-          setFw("UNSUPPORTED FIRMWARE", "bad");
-          return;
+        // ------- percentage setter -------
+        var currentPct = 0;
+        function setPct(p) {
+          if (p <= currentPct) return;
+          currentPct = p;
+          pctEl.firstChild.nodeValue = String(p);
+          ringFill.style.strokeDashoffset = CIRC * (1 - p / 100);
         }
 
-        // ============================================================
-        //  progress bar
-        // ============================================================
-        // Milestone map. jb.js dispatches a "jbmark" CustomEvent from
-        // mark(tag, detail) and a "jbdone" CustomEvent right after
-        // payloadRunning = plDone. We map the tags it emits to a
-        // monotonic percentage. Unknown tags are ignored.
+        // ------- milestone map (same tags as before) -------
         var PCT = {
           "PRIMITIVE-OK":                       10,
           "BASES":                              15,
@@ -208,48 +279,38 @@
           "KERNEL-PATCHED":                     94,
           "PAYLOAD-RUN":                        99
         };
-        var currentPct = 0;
-        function bump(tag) {
-          var p = PCT[tag];
-          if (p === undefined) return;
-          if (p <= currentPct) return;
-          currentPct = p;
-          progEl.style.width = p + "%";
-          progLabel.textContent = p + "%";
-        }
-        function showProg() {
-          progWrap.classList.add("on");
-          progLabel.classList.add("on");
-        }
-        function finishProg(ok) {
-          progWrap.classList.add("on");
-          progLabel.classList.add("on");
-          currentPct = 100;
-          progEl.style.width = "100%";
-          progLabel.textContent = "100%";
-          progWrap.classList.remove("done", "fail");
-          progWrap.classList.add(ok ? "done" : "fail");
+
+        // ============================================================
+        //  unsupported firmware -> dead end, chip top-left, no jb
+        // ============================================================
+        if (!supported) {
+          fwVer.textContent = "firmware " + (key || "unknown");
+          fwChip.classList.add("on");
+          return;
         }
 
         // ============================================================
-        //  jb.js loading
+        //  load jb.js (same gating as before, no visible text)
         // ============================================================
         var jbLoaded = false;
         function loadJb() {
           if (jbLoaded) return;
           jbLoaded = true;
-          setFw("running jailbreak...", "warn");
-          showProg();
+          document.body.classList.add("running");
 
           window.addEventListener("jbmark", function (e) {
-            try { bump(e && e.detail && e.detail.tag); } catch (_) {}
+            try {
+              var t = e && e.detail && e.detail.tag;
+              if (t && PCT[t] !== undefined) setPct(PCT[t]);
+            } catch (_) {}
           }, false);
+
           window.addEventListener("jbdone", function () {
-            finishProg(true);
-            setFw("done", "ok");
-            msgEl.className = "done";
-            msgEl.textContent = "DONE";
-            document.body.className = "done";
+            setPct(100);
+            ringSvg.classList.add("done");
+            document.body.classList.remove("running");
+            document.body.classList.add("done");
+            finalEl.textContent = "DONE";
           }, false);
 
           var s = document.createElement("script");
@@ -258,73 +319,42 @@
           document.body.appendChild(s);
         }
 
-        // Watch body.className for jb.js's finishUI() fail path.
-        var bodyObserver = new MutationObserver(function () {
-          if (document.body.className.indexOf("done") >= 0) return;
-          if (document.body.className.indexOf("fail") >= 0) {
-            finishProg(false);
-            setFw("failed", "bad");
-            msgEl.className = "fail";
-            msgEl.textContent = "REBOOT YOUR CONSOLE AND TRY AGAIN";
+        // watch body.className for the fail path from finishUI()
+        var bodyObs = new MutationObserver(function () {
+          var c = document.body.className;
+          if (c.indexOf("done") >= 0) return;   // success already handled
+          if (c.indexOf("fail") >= 0) {
+            ringSvg.classList.add("fail");
+            document.body.classList.remove("running");
+            finalEl.textContent = "REBOOT YOUR CONSOLE AND TRY AGAIN";
           }
         });
-        bodyObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+        bodyObs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
         // ============================================================
-        //  applicationCache gate
+        //  applicationCache gate (unchanged, silent)
         // ============================================================
         var ac = window.applicationCache;
         if (!ac || !document.documentElement.hasAttribute("manifest")) {
-          loadJb();
-          return;
+          loadJb(); return;
         }
-        if (!navigator.onLine) {
-          setCache("offline -- from cache", true);
-          loadJb();
-          return;
-        }
-        if (ac.status === ac.IDLE) {
-          setCache("cached", true);
-          loadJb();
-          return;
-        }
+        if (!navigator.onLine) { loadJb(); return; }
+        if (ac.status === ac.IDLE) { loadJb(); return; }
         if (ac.status === ac.UPDATEREADY) {
           try { ac.swapCache(); } catch (e) {}
-          setCache("update downloaded (continuing)", true);
-          loadJb();
-          return;
+          loadJb(); return;
         }
-
-        setCache("checking cache...");
-
-        ac.addEventListener("downloading", function () {
-          setCache("caching for offline (first run)...");
-        }, false);
-        ac.addEventListener("progress", function (e) {
-          if (e && e.total)
-            setCache("caching " + Math.round((e.loaded / e.total) * 100) + "%");
-        }, false);
-        ac.addEventListener("cached", function () {
-          setCache("cached for offline use", true);
-          loadJb();
-        }, false);
+        ac.addEventListener("cached",      function () { loadJb(); }, false);
+        ac.addEventListener("noupdate",    function () { loadJb(); }, false);
         ac.addEventListener("updateready", function () {
           try { ac.swapCache(); } catch (e) {}
-          setCache("update downloaded (continuing)", true);
           loadJb();
         }, false);
-        ac.addEventListener("noupdate", function () {
-          setCache("cached -- offline ready", true);
-          loadJb();
-        }, false);
-        ac.addEventListener("error", function () {
-          setCache("cache unavailable");
-          loadJb();
-        }, false);
-        ac.addEventListener("obsolete", function () {
-          setCache("cache obsolete");
-          loadJb();
-        }, false);
+        ac.addEventListener("error",       function () { loadJb(); }, false);
+        ac.addEventListener("obsolete",    function () { loadJb(); }, false);
+
+        // if the browser never fires cached/noupdate (rare), fall back
+        setTimeout(function () { if (!jbLoaded) loadJb(); }, 4000);
       })();
     </script>
   </body>
