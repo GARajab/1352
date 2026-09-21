@@ -1,20 +1,24 @@
 CACHE MANIFEST
-# Rajab v13
+# rev 20260921-goldhen-13.02-13.52
 
 index.html
 rajab-logo.jpg
-jb.js?v=10
-core.js?v=10
+jb.js
+core.js
 mem.js
 int64.js
 ps4_offsets.js
 rpc_worker.js
-payload.bin
+payload2.bin
+goldhen.bin
 patches/1302.bin
 patches/1350.bin
 patches/1352.bin
+core.js?v=10
+jb.js?v=10
 
 NETWORK:
 *
 
 FALLBACK:
+index.html index.html
