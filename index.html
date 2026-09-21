@@ -81,7 +81,7 @@
             /* font-size: clamp(16px, 3.2vmin, 30px); */
             font-weight: 700;
             /* letter-spacing: .12em; */
-            margin: 10 0 0 10;
+            margin: 10px 0 0 10px;
             color: #eff4f1;
         }
 
@@ -341,11 +341,6 @@
                 fwnum = parseInt(m[1], 10) * 100 + parseInt(ms, 10);
             }
 
-            console.log("has manifest attr:", document.documentElement.hasAttribute("manifest"));
-            console.log("has applicationCache:", !!window.applicationCache);
-            console.log("status:", window.applicationCache && window.applicationCache.status);
-            // status codes: 0=UNCACHED 1=IDLE 2=CHECKING 3=DOWNLOADING 4=UPDATEREADY 5=OBSOLETE
-
             var supported = (fwnum !== null && SUPPORTED[fwnum] === 1);
 
             // ------- percentage setter -------
@@ -428,7 +423,7 @@
             bodyObs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
             // ============================================================
-            //  applicationCache gate (unchanged, silent)
+            //  applicationCache gate
             // ============================================================
             var ac = window.applicationCache;
             if (!ac || !document.documentElement.hasAttribute("manifest")) {
@@ -440,19 +435,53 @@
                 try { ac.swapCache(); } catch (e) { }
                 loadJb(); return;
             }
-            ac.addEventListener("cached", function () { loadJb(); }, false);
-            ac.addEventListener("noupdate", function () { loadJb(); }, false);
+
+            ac.addEventListener("checking", function () {
+                console.log("[appcache] checking");
+            }, false);
+
+            ac.addEventListener("downloading", function () {
+                console.log("[appcache] downloading");
+            }, false);
+
+            ac.addEventListener("progress", function (e) {
+                if (e && e.total)
+                    console.log("[appcache] progress " + e.loaded + "/" + e.total);
+            }, false);
+
+            ac.addEventListener("cached", function () {
+                console.log("[appcache] cached OK");
+                loadJb();
+            }, false);
+
+            ac.addEventListener("noupdate", function () {
+                console.log("[appcache] noupdate (already cached)");
+                loadJb();
+            }, false);
+
             ac.addEventListener("updateready", function () {
+                console.log("[appcache] updateready");
                 try { ac.swapCache(); } catch (e) { }
                 loadJb();
             }, false);
-            ac.addEventListener("error", function () { loadJb(); }, false);
-            ac.addEventListener("obsolete", function () { loadJb(); }, false);
 
-            // if the browser never fires cached/noupdate (rare), fall back
-            setTimeout(function () { if (!jbLoaded) loadJb(); }, 4000);
+            ac.addEventListener("error", function () {
+                console.log("[appcache] ERROR — a listed file is missing or the manifest is invalid");
+                // Show it on screen so you can see it on the PS4 without a console
+                fwVer.textContent = "cache error — a listed file is missing";
+                fwChip.classList.add("on");
+                loadJb();
+            }, false);
+
+            ac.addEventListener("obsolete", function () {
+                console.log("[appcache] obsolete");
+                loadJb();
+            }, false);
+
+            // NOTE: no 4-second fallback timer here on purpose.
+            // Every appcache branch above already calls loadJb().
+            // A timeout would fire mid-download and cancel the manifest.
         })();
-
     </script>
 </body>
 
