@@ -426,6 +426,10 @@
             //  applicationCache gate
             // ============================================================
             var ac = window.applicationCache;
+            window.addEventListener("error", function (e) {
+                // appcache fetch errors bubble up as a generic error event with no URL,
+                // so we rely on the network panel / console instead; this is a hint only.
+            }, true);
             if (!ac || !document.documentElement.hasAttribute("manifest")) {
                 loadJb(); return;
             }
