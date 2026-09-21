@@ -54,6 +54,7 @@ function finishUI(ok) {
   document.body.className = ok ? "done" : "fail";
 }
 function mark(tag, detail) {
+  try { window.dispatchEvent(new CustomEvent("jbmark", { detail: { tag: tag, detail: detail } })); } catch (e) {}
   const raw = detail;
   detail = terse(detail);
   lines.push(tag + (detail == null || detail === "" ? "" : "  " + detail));
@@ -3094,6 +3095,7 @@ let allDone = false,
                   );
                   plDone = rc === 0 && handle.hi >>> 0 > 0;
                   payloadRunning = plDone;
+                  if (plDone) { try { window.dispatchEvent(new CustomEvent("jbdone")); } catch (e) {} }
                   mark(
                     "PAYLOAD-RUN",
                     "pthread_create=" + rc + " handle=" + handle,
